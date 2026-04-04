@@ -7,7 +7,7 @@ This project demonstrates setting up a local PHP development environment using X
 - PHP running on localhost
 - XAMPP server configured successfully
 - Git version control initialized
-- Project uploaded to GitHub
+- Project uploaded to GitHub 
 
 ## Output
 Hello Karthik! Your PHP setup is working perfectly 🚀
