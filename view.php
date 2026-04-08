@@ -1,116 +1,75 @@
-<?php
+    <?php
 session_start();
-include 'config.php';
 
-// Search logic
-if (isset($_GET['search'])) {
-    $search = $_GET['search'];
-    $result = mysqli_query($conn, "SELECT * FROM posts WHERE title LIKE '%$search%'");
-} else {
-    $result = mysqli_query($conn, "SELECT * FROM posts");
+if(!isset($_SESSION['user'])){
+    header("Location: login.php");
+    exit();
 }
 ?>
-<!DOCTYPE html>
-<html>
-<head>
-    <title>My Blog</title>
-    <style>
-        body {
-            font-family: Arial;
-            background: #f4f4f4;
-            text-align: center;
-        }
-        h1 {
-            margin-top: 20px;
-        }
-        .top-bar {
-            margin: 20px;
-        }
-        .top-bar a {
-            padding: 10px 20px;
-            background: #28a745;
-            color: white;
-            border-radius: 5px;
-            text-decoration: none;
-        }
-        .search-box {
-            margin: 20px;
-        }
-        input {
-            padding: 8px;
-            width: 200px;
-        }
-        button {
-            padding: 8px 12px;
-            background: black;
-            color: white;
-            border: none;
-        }
-        .post {
-            background: white;
-            padding: 15px;
-            margin: 20px auto;
-            width: 50%;
-            box-shadow: 0 0 10px gray;
-            border-radius: 10px;
-        }
-        .actions a {
-            text-decoration: none;
-            margin: 5px;
-            padding: 5px 10px;
-            background: black;
-            color: white;
-            border-radius: 5px;
-        }
-    </style>
-</head>
-<body>
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>Advanced Blog</title>
 
-<h1>My Blog</h1>
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 
-<div style="margin:20px;">
-<?php
-if (isset($_SESSION['user'])) {
-    echo "Welcome, <b>" . $_SESSION['user'] . "</b> ";
-    echo "| <a href='logout.php'>Logout</a>";
-} else {
-    echo "<a href='login.php'>Login</a> | <a href='register.php'>Register</a>";
-}
-?>
-</div>
+        <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    </head>
+    <body class="bg-light">
+        <nav class="navbar navbar-dark bg-dark">
+  <div class="container-fluid">
+    <span class="navbar-brand">🚀 Blog System</span>
 
-<!-- ✅ Create Post Button -->
-<div class="top-bar">
-    <a href="create.php">➕ Create Post</a>
-</div>
+    <div>
+        <span class="text-white me-3">
+            Welcome, <?php echo $_SESSION['user']; ?>
+        </span>
+        <a href="logout.php" class="btn btn-danger">Logout</a>
+    </div>
+  </div>
+</nav>
 
-<!-- 🔍 Search Box -->
-<div class="search-box">
-    <form method="GET">
-        <input type="text" name="search" placeholder="Search posts...">
-        <button>Search</button>
-    </form>
-</div>
+    <div class="container mt-5">
 
-<?php
-if (mysqli_num_rows($result) > 0) {
-    while ($row = mysqli_fetch_assoc($result)) {
-        echo "<div class='post'>";
-        echo "<h2>" . $row['title'] . "</h2>";
-        echo "<p>" . $row['content'] . "</p>";
-        echo "<small>" . $row['created_at'] . "</small><br><br>";
+    <h2 class="text-center mb-4">🚀 Advanced Blog System</h2>
 
-        echo "<div class='actions'>";
-        echo "<a href='edit.php?id=" . $row['id'] . "'>Edit</a>";
-        echo "<a href='delete.php?id=" . $row['id'] . "' onclick='return confirm(\"Are you sure?\")'>Delete</a>";
-        echo "</div>";
+    <!-- SEARCH BAR -->
+    <input type="text" id="search" class="form-control mb-3" placeholder="Search posts...">
 
-        echo "</div>";
+    <!-- RESULTS -->
+    <div id="postData"></div>
+
+    </div>
+
+    <script>
+
+    // LOAD DATA FUNCTION
+    function loadData(page = 1, search = '') {
+        $.post("fetch_posts.php", {
+            page: page,
+            search: search
+        }, function(data){
+            $("#postData").html(data);
+        });
     }
-} else {
-    echo "<p>No posts found</p>";
-}
-?>
 
-</body>
-</html>
+    // INITIAL LOAD
+    loadData();
+
+    // SEARCH EVENT
+    $("#search").keyup(function(){
+        let search = $(this).val();
+        loadData(1, search);
+    });
+
+    // PAGINATION CLICK
+    $(document).on("click", ".page-btn", function(){
+        let page = $(this).data("page");
+        let search = $("#search").val();
+        loadData(page, search);
+    });
+
+    </script>
+
+    </body>
+    </html>
