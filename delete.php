@@ -1,6 +1,15 @@
 <?php
 session_start();
 
+if ($_SESSION['role'] != 'admin') {
+    echo "Access Denied!";
+    exit();
+}
+?>
+
+<?php
+session_start();
+
 if (!isset($_SESSION['user'])) {
     echo "Please login first!";
     exit();

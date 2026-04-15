@@ -3,27 +3,36 @@ include 'db.php';
 
 $limit = 5;
 
-$page = isset($_POST['page']) ? $_POST['page'] : 1;
+$page = isset($_POST['page']) ? (int)$_POST['page'] : 1;
+if($page < 1) $page = 1;
 $search = isset($_POST['search']) ? $_POST['search'] : '';
 
 $offset = ($page - 1) * $limit;
 
-// FETCH POSTS
-$sql = "SELECT * FROM posts 
-        WHERE title LIKE '%$search%' 
-        OR content LIKE '%$search%' 
-        ORDER BY created_at DESC 
-        LIMIT $limit OFFSET $offset";
+// Prepare search parameter
+$searchParam = "%$search%";
 
-$result = $conn->query($sql);
+$stmt = $conn->prepare("SELECT * FROM posts 
+        WHERE title LIKE ? 
+        OR content LIKE ? 
+        ORDER BY created_at DESC 
+        LIMIT ? OFFSET ?");
+
+// Bind parameters
+$stmt->bind_param("ssii", $searchParam, $searchParam, $limit, $offset);
+
+// Execute
+$stmt->execute();
+
+$result = $stmt->get_result();
 
 // DISPLAY POSTS
 if($result->num_rows > 0){
     while($row = $result->fetch_assoc()){
        echo "
 <div class='card p-3 mb-3 shadow'>
-    <h4>{$row['title']}</h4>
-    <p>{$row['content']}</p>
+    <h4>" . htmlspecialchars($row['title']) . "</h4>
+<p>" . htmlspecialchars($row['content']) . "</p>
     <small>{$row['created_at']}</small><br><br>
 
     <a href='edit.php?id={$row['id']}' class='btn btn-warning btn-sm'>Edit</a>
@@ -35,11 +44,16 @@ if($result->num_rows > 0){
 }
 
 // PAGINATION
-$total_query = "SELECT COUNT(*) as total FROM posts 
-                WHERE title LIKE '%$search%' 
-                OR content LIKE '%$search%'";
+$searchParam = "%$search%";
 
-$total_result = $conn->query($total_query);
+$stmt2 = $conn->prepare("SELECT COUNT(*) as total FROM posts 
+                WHERE title LIKE ? 
+                OR content LIKE ?");
+
+$stmt2->bind_param("ss", $searchParam, $searchParam);
+$stmt2->execute();
+
+$total_result = $stmt2->get_result();
 $total = $total_result->fetch_assoc()['total'];
 
 $pages = ceil($total / $limit);

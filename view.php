@@ -6,6 +6,27 @@ if(!isset($_SESSION['user'])){
     exit();
 }
 ?>
+
+<?php
+
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
+}
+
+if (!isset($_SESSION['user']) || !isset($_SESSION['role'])) {
+    header("Location: login.php");
+    exit();
+}
+?>
+
+<h2>Dashboard</h2>
+
+<p><b>User:</b> <?php echo $_SESSION['user']; ?></p>
+<p><b>Role:</b> <?php echo $_SESSION['role']; ?></p>
+
+<br>
+
+
     <!DOCTYPE html>
     <html>
     <head>

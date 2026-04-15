@@ -1,23 +1,27 @@
 <?php
 include "config.php";
 
-if(isset($_POST['submit'])) {
+if(isset($_POST['submit'])){
+
     $username = $_POST['username'];
-    $password = password_hash($_POST['password'], PASSWORD_DEFAULT);
+    $password = $_POST['password'];
 
-    $sql = "INSERT INTO users (username, password) VALUES ('$username', '$password')";
 
-    if(mysqli_query($conn, $sql)) {
-        echo "User Registered Successfully!";
-    } else {
-        echo "Error: " . mysqli_error($conn);
+    if (empty($username) || empty($password)) {
+        echo "All fields are required";
+        exit();
+    }
+
+    if (strlen($password) < 6) {
+        echo "Password must be at least 6 characters";
+        exit();
     }
 }
 ?>
 
 <h2>Register</h2>
 
-<form method="POST">
+<form method="POST" onsubmit="return validateForm()">
     Username: <input type="text" name="username" required><br><br>
     Password: <input type="password" name="password" required><br><br>
     <button name="submit">Register</button>
@@ -25,3 +29,30 @@ if(isset($_POST['submit'])) {
 
 <br>
 <a href="login.php">Already have account? Login</a>
+
+<script>
+function validateForm() {
+    let email = document.forms[0]["email"].value;
+    let password = document.forms[0]["password"].value;
+
+    // Check empty
+    if (email == "" || password == "") {
+        alert("All fields are required");
+        return false;
+    }
+
+    // Check email format
+    if (!email.includes("@")) {
+        alert("Invalid email");
+        return false;
+    }
+
+    // Check password length
+    if (password.length < 6) {
+        alert("Password must be at least 6 characters");
+        return false;
+    }
+
+    return true;
+}
+</script>
