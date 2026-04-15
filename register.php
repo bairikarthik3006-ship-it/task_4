@@ -1,58 +1,63 @@
 <?php
-include "config.php";
+include 'config.php';
 
-if(isset($_POST['submit'])){
+$message = "";
 
-    $username = $_POST['username'];
-    $password = $_POST['password'];
+if (isset($_POST['register'])) {
 
+    $username = trim($_POST['username']);
+    $password = trim($_POST['password']);
 
+    
     if (empty($username) || empty($password)) {
-        echo "All fields are required";
-        exit();
-    }
+        $message = "All fields are required!";
+    } elseif (strlen($password) < 6) {
+        $message = "Password must be at least 6 characters!";
+    } else {
 
-    if (strlen($password) < 6) {
-        echo "Password must be at least 6 characters";
-        exit();
+        
+        $hashedPassword = password_hash($password, PASSWORD_DEFAULT);
+
+        
+        $stmt = $conn->prepare("INSERT INTO users (username, password, role) VALUES (?, ?, 'user')");
+        $stmt->bind_param("ss", $username, $hashedPassword);
+
+        if ($stmt->execute()) {
+            $message = " Registration Successful! You can now login.";
+        } else {
+            $message = " Error: Username may already exist.";
+        }
     }
 }
 ?>
 
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Register</title>
+</head>
+<body>
+
 <h2>Register</h2>
 
-<form method="POST" onsubmit="return validateForm()">
-    Username: <input type="text" name="username" required><br><br>
-    Password: <input type="password" name="password" required><br><br>
-    <button name="submit">Register</button>
+<?php if ($message != ""): ?>
+    <p style="color:green;"><?php echo $message; ?></p>
+<?php endif; ?>
+
+<form method="POST">
+
+    Username:
+    <input type="text" name="username" required><br><br>
+
+    Password:
+    <input type="password" name="password" required><br><br>
+
+    <button type="submit" name="register">Register</button>
+
 </form>
 
 <br>
 <a href="login.php">Already have account? Login</a>
 
-<script>
-function validateForm() {
-    let email = document.forms[0]["email"].value;
-    let password = document.forms[0]["password"].value;
-
-    // Check empty
-    if (email == "" || password == "") {
-        alert("All fields are required");
-        return false;
-    }
-
-    // Check email format
-    if (!email.includes("@")) {
-        alert("Invalid email");
-        return false;
-    }
-
-    // Check password length
-    if (password.length < 6) {
-        alert("Password must be at least 6 characters");
-        return false;
-    }
-
-    return true;
-}
-</script>
+</body>
+</html>

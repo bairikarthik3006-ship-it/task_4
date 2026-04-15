@@ -1,27 +1,62 @@
 <?php
-session_start();
 
-if (!isset($_SESSION['role']) || $_SESSION['role'] != 'admin') {
-    echo "Access Denied!";
-    exit();
+// ✅ Safe session start
+if (session_status() === PHP_SESSION_NONE) {
+    session_start();
 }
-?>
 
-<?php
-session_start();
-
-if (!isset($_SESSION['user'])) {
-    echo "Please login first!";
+// 🔐 Role + login check
+if (!isset($_SESSION['user']) || $_SESSION['role'] !== 'admin') {
+    echo "Access Denied!";
     exit();
 }
 
 include 'config.php';
 
+// 🔐 Validate ID
+if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
+    echo "Invalid post ID!";
+    exit();
+}
+
 $id = $_GET['id'];
 
-// Get old data
-$result = mysqli_query($conn, "SELECT * FROM posts WHERE id=$id");
-$row = mysqli_fetch_assoc($result);
+// 🔐 Prepared statement (SELECT)
+$stmt = $conn->prepare("SELECT * FROM posts WHERE id = ?");
+$stmt->bind_param("i", $id);
+$stmt->execute();
+$result = $stmt->get_result();
+$row = $result->fetch_assoc();
+
+if (!$row) {
+    echo "Post not found!";
+    exit();
+}
+
+// ✅ Update logic
+$message = "";
+
+if (isset($_POST['update'])) {
+
+    $title = trim($_POST['title']);
+    $content = trim($_POST['content']);
+
+    // 🔐 Validation
+    if (empty($title) || empty($content)) {
+        $message = "All fields are required!";
+    } else {
+
+        // 🔐 Prepared statement (UPDATE)
+        $stmt = $conn->prepare("UPDATE posts SET title = ?, content = ? WHERE id = ?");
+        $stmt->bind_param("ssi", $title, $content, $id);
+
+        if ($stmt->execute()) {
+            $message = " Post updated successfully!";
+        } else {
+            $message = " Update failed!";
+        }
+    }
+}
 ?>
 
 <!DOCTYPE html>
@@ -33,22 +68,19 @@ $row = mysqli_fetch_assoc($result);
 
 <h2>Edit Post</h2>
 
+<?php if ($message != "") echo "<p>$message</p>"; ?>
+
 <form method="POST">
-    Title: <input type="text" name="title" value="<?php echo $row['title']; ?>"><br><br>
-    Content: <textarea name="content"><?php echo $row['content']; ?></textarea><br><br>
+
+    Title:
+    <input type="text" name="title" value="<?php echo htmlspecialchars($row['title']); ?>"><br><br>
+
+    Content:
+    <textarea name="content"><?php echo htmlspecialchars($row['content']); ?></textarea><br><br>
+
     <button name="update">Update</button>
+
 </form>
-
-<?php
-if (isset($_POST['update'])) {
-    $title = $_POST['title'];
-    $content = $_POST['content'];
-
-    mysqli_query($conn, "UPDATE posts SET title='$title', content='$content' WHERE id=$id");
-
-    echo "Post updated successfully!";
-}
-?>
 
 </body>
 </html>
