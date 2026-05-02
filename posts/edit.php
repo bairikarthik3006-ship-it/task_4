@@ -5,13 +5,19 @@ if (session_status() === PHP_SESSION_NONE) {
     session_start();
 }
 
-// 🔐 Role + login check
-if (!isset($_SESSION['user']) || $_SESSION['role'] !== 'admin') {
-    echo "Access Denied!";
+// 🔐 Check login first
+if (!isset($_SESSION['user'])) {
+    header("Location: /blog-project/auth/login.php");
     exit();
 }
 
-include 'config.php';
+// 🔐 Check admin role
+if ($_SESSION['role'] !== 'admin') {
+    header("Location: /blog-project/index.php");
+    exit();
+}
+
+require_once __DIR__ . '/../config/config.php';
 
 // 🔐 Validate ID
 if (!isset($_GET['id']) || !is_numeric($_GET['id'])) {
